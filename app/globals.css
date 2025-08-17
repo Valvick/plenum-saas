@@ -1,0 +1,141 @@
+/* app/globals.css */
+
+/* Tailwind base */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========
+   Plenum Theme (HSL tokens para shadcn/ui)
+   ========= */
+:root {
+  /* Base */
+  --background: 210 20% 98%;
+  --foreground: 222 47% 11%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  /* Plenum — primária e estados */
+  --primary: 210 73% 44%;          /* Azul Plenum */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 199 92% 64%;        /* Azul-claro/acento */
+  --secondary-foreground: 222 47% 11%;
+
+  --muted: 215 16% 92%;
+  --muted-foreground: 215 16% 35%;
+
+  --accent: 160 84% 39%;           /* Sucesso/teal */
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --warning: 38 92% 50%;
+
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 210 73% 44%;
+
+  /* Raio padrão (shadcn) */
+  --radius: 0.75rem;
+}
+
+/* (Opcional) Dark mode */
+.dark {
+  --background: 222 47% 8%;
+  --foreground: 210 40% 98%;
+
+  --card: 222 47% 10%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 222 47% 10%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 210 73% 50%;
+  --primary-foreground: 222 47% 11%;
+
+  --secondary: 199 92% 56%;
+  --secondary-foreground: 222 47% 11%;
+
+  --muted: 222 40% 14%;
+  --muted-foreground: 215 20% 70%;
+
+  --accent: 160 84% 45%;
+  --accent-foreground: 222 47% 11%;
+
+  --destructive: 0 84% 64%;
+  --destructive-foreground: 222 47% 11%;
+
+  --warning: 38 92% 55%;
+
+  --border: 222 40% 18%;
+  --input: 222 40% 18%;
+  --ring: 210 73% 60%;
+}
+
+/* =========
+   Base resets + fontes
+   ========= */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html, body {
+    @apply bg-background text-foreground;
+  }
+  /* Fonte padrão: a variável --font-inter vem do next/font no layout.tsx */
+  body {
+    font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Helvetica Neue", Helvetica, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  /* Títulos com Plus Jakarta Sans (var(--font-jakarta) definida no layout.tsx) */
+  h1, h2, h3, .font-display {
+    font-family: var(--font-jakarta), var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+}
+
+/* =========
+   Quality-of-life (opcional)
+   ========= */
+
+/* Links */
+a {
+  color: hsl(var(--primary));
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Botões primários (por segurança, caso algo não use o shadcn Button) */
+.btn-primary {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: var(--radius);
+  padding: 0.5rem 0.875rem;
+}
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+/* Scrollbar discreta (WebKit) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
