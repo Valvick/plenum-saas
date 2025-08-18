@@ -1,84 +1,89 @@
 'use client';
-
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import type { Route } from 'next';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableHeader,
+  TableHead,
+  TableRow,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table';
 
 type Course = {
   id: string;
-  title: string | null;
-  course_code: string | null;
+  title: string;
+  course_code: string;
   validity_days: number | null;
 };
 
 export default function CoursesPage() {
-  const [rows, setRows] = useState<Course[]>([]);
-  const [q, setQ] = useState("");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [q, setQ] = useState('');
 
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const { createClient } = await import("@supabase/supabase-js");
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-        const supabase = createClient(url, key);
-
-        const { data } = await supabase
-          .from("courses")
-          .select("id, title, course_code, validity_days")
-          .order("title", { ascending: true });
-        if (!alive) return;
-        setRows((data as Course[]) ?? []);
-      } catch {
-        setRows([]);
-      }
-    })();
-    return () => { alive = false; };
+    // TODO: substituir por fetch real via Supabase (client-side).
+    setCourses([
+      { id: '1', title: 'NR-10 Básico', course_code: 'NR10', validity_days: 24 },
+      { id: '2', title: 'NR-35 Trabalho em Altura', course_code: 'NR35', validity_days: 24 },
+    ]);
   }, []);
 
-  const filtered = rows.filter(r =>
-    (r.title ?? "").toLowerCase().includes(q.toLowerCase()) ||
-    (r.course_code ?? "").toLowerCase().includes(q.toLowerCase())
-  );
+  const filtered = q
+    ? courses.filter((c) =>
+        (c.title + c.course_code).toLowerCase().includes(q.toLowerCase()),
+      )
+    : courses;
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Cursos</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">Cursos</h1>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Buscar..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-60"
+          />
+          <Link href={'/enrollments' as Route}>
+            <Button>Ver matrículas</Button>
+          </Link>
+        </div>
+      </div>
 
       <Card className="rounded-2xl">
-        <CardContent className="p-4 flex items-center gap-3">
-          <Input placeholder="Buscar curso ou código..." value={q} onChange={e=>setQ(e.target.value)} />
-          <Badge variant="secondary">{filtered.length} itens</Badge>
-        </CardContent>
-      </Card>
-
-      <Card className="rounded-2xl overflow-x-auto">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Título</TableHead>
                 <TableHead>Código</TableHead>
-                <TableHead>Validade (dias)</TableHead>
+                <TableHead>Título</TableHead>
+                <TableHead>Validade (meses)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(r => (
-                <TableRow key={r.id}>
-                  <TableCell className="font-medium">{r.title ?? "—"}</TableCell>
-                  <TableCell>{r.course_code ?? "—"}</TableCell>
-                  <TableCell>{r.validity_days ?? "—"}</TableCell>
+              {filtered.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>{c.course_code}</TableCell>
+                  <TableCell>{c.title}</TableCell>
+                  <TableCell>{c.validity_days ?? '-'}</TableCell>
                 </TableRow>
               ))}
+
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">Sem resultados</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={3}>Nenhum curso encontrado.</TableCell>
+                </TableRow>
               )}
+            </TableBody>
           </Table>
         </CardContent>
       </Card>
