@@ -1,39 +1,70 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/ app/api/passport/[slug]/certs/route.ts
+import { NextResponse } from "next/server";
 import { supabaseService } from "@/lib/supabaseService";
 
 export async function GET(_req: Request, { params }: { params: { slug: string } }) {
-  const s = supabaseService();
+  try {
+    const slug = params?.slug;
+    if (!slug) {
+      return NextResponse.json({ error: "missing_slug" }, { status: 400 });
+    }
 
-  // Descobre employee_id e company_id pelo slug
-  const { data: pass, error: pErr } = await s
-    .from("public_passports")
-    .select("employee_id, employees:employee_id(company_id)")
-    .eq("slug", params.slug)
-    .maybeSingle();
+    const s = supabaseService(); // usa SERVICE_ROLE_KEY no server
 
-  if (pErr || !pass) return new Response("Not found", { status: 404 });
+    // 1) Buscar passaporte pelo slug
+    const { data: pass, error: e1 } = await s
+      .from("public_passports")
+      .select("employee_id, enabled")
+      .eq("slug", slug)
+      .single();
 
-  const employeeId = pass.employee_id as string;
-  const companyId = (pass as any).employees?.company_id as string;
+    if (e1 || !pass?.employee_id) {
+      return NextResponse.json({ error: "passport_not_found" }, { status: 404 });
+    }
 
-  // Lista objetos no bucket certificates
-  const { data: listed, error: lErr } = await s.storage
-    .from("certificates")
-    .list(`${companyId}/${employeeId}`, { limit: 100 });
+    // 2) Buscar colaborador para saber company_id e nome
+    const { data: emp, error: e2 } = await s
+      .from("employees")
+      .select("id, company_id, full_name")
+      .eq("id", pass.employee_id)
+      .single();
 
-  if (lErr) return new Response("List error", { status: 500 });
+    if (e2 || !emp) {
+      return NextResponse.json({ error: "employee_not_found" }, { status: 404 });
+    }
 
-  // Gera signed URLs (10 min)
-  const signed = await Promise.all(
-    (listed ?? []).map(async (f) => {
-      const path = `${companyId}/${employeeId}/${f.name}`; // caminho relativo ao bucket
-      const { data } = await s.storage.from("certificates").createSignedUrl(path, 600);
-      return { name: f.name, url: data?.signedUrl ?? null };
-    })
-  );
+    // 3) Listar PDFs na pasta certificates/<company_id>/<employee_id>/
+    const basePath = `${emp.company_id}/${emp.id}`;
+    const { data: files, error: e3 } = await s.storage
+      .from("certificates")
+      .list(basePath, { limit: 100, offset: 0 });
 
-  return Response.json(signed);
+    if (e3) {
+      // Se a pasta não existir ainda, retorne lista vazia (não é erro)
+      return NextResponse.json([]);
+    }
+
+    const pdfs = (files ?? []).filter((f) => f.name.toLowerCase().endsWith(".pdf"));
+
+    // 4) Gerar Signed URLs (10 minutos)
+    const result: { name: string; url: string }[] = [];
+    for (const f of pdfs) {
+      const path = `${basePath}/${f.name}`;
+      const { data: signed } = await s.storage
+        .from("certificates")
+        .createSignedUrl(path, 600);
+      if (signed?.signedUrl) {
+        result.push({ name: f.name, url: signed.signedUrl });
+      }
+    }
+
+    return NextResponse.json(result);
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: "internal_error", message: err?.message ?? String(err) },
+      { status: 500 }
+    );
+  }
 }
