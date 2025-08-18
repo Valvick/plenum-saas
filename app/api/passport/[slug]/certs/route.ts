@@ -1,7 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-
 / app/api/passport/[slug]/certs/route.ts
 import { supabaseService } from "@/lib/supabaseService";
 

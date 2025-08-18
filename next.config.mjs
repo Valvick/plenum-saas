@@ -2,7 +2,6 @@
 const nextConfig = {
   experimental: { typedRoutes: true },
   reactStrictMode: true,
-  // Importante: NÃO use `output: 'export'` aqui.
+  // NADA de `output: 'export'` aqui.
 };
-
 export default nextConfig;
