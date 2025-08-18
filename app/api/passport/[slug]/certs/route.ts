@@ -1,4 +1,8 @@
-// app/api/passport/[slug]/certs/route.ts
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+
+/ app/api/passport/[slug]/certs/route.ts
 import { supabaseService } from "@/lib/supabaseService";
 
 export async function GET(_req: Request, { params }: { params: { slug: string } }) {
