@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -13,6 +15,7 @@ export default function Home() {
   ]);
 
   useEffect(() => {
+    // TODO: trocar pelos números reais vindos da API /api/compliance
     setStats([
       { label: 'Em dia', value: 128 },
       { label: 'A vencer (≤ 30 dias)', value: 23 },
@@ -31,9 +34,8 @@ export default function Home() {
           <Link href="/employees" className="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Colaboradores</Link>
           <Link href="/courses" className="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Cursos</Link>
           <Link href="/exams" className="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Exames</Link>
-           <Link href="/dashboard" className="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Vencimentos</Link>
+          <Link href="/dashboard" className="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Vencimentos</Link>
           <Link href="/enrollments" className="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Matrículas</Link>
-
           <a href="/setup" className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500">Configurar</a>
         </div>
       </header>

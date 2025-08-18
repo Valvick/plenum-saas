@@ -1,91 +1,66 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
-  const [token, setToken] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  const sendCode = async (e: React.FormEvent) => {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true },
-    });
-    setLoading(false);
-    if (error) return alert(error.message);
-    setSent(true);
-  };
+    setMsg(null);
+    setBusy(true);
+    try {
+      // Importa supabase-js só quando precisa (evita rodar no build)
+      const { createClient } = await import("@supabase/supabase-js");
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      const supabase = createClient(url, key);
 
-  const verifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email',
-    });
-    setLoading(false);
-    if (error) return alert(error.message);
-    if (data.session) {
-      router.push('/');
-      router.refresh();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      // redireciona pós-login
+      window.location.href = "/dashboard";
+    } catch (err: any) {
+      setMsg(err?.message ?? "Falha no login");
+    } finally {
+      setBusy(false);
     }
-  };
+  }
 
   return (
-    <main className="min-h-screen grid place-items-center p-6">
-      <div className="w-full max-w-md rounded-2xl p-6 bg-[#0f172a] shadow">
-        <h1 className="text-2xl font-bold mb-4">Entrar</h1>
-
-        {!sent ? (
-          <form onSubmit={sendCode} className="space-y-3">
-            <label className="block">
-              <span className="text-sm text-slate-300">E-mail</span>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-800 px-3 py-2 outline-none"
-                placeholder="voce@empresa.com.br"
-              />
-            </label>
-            <button disabled={loading} className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 py-2 font-semibold">
-              {loading ? 'Enviando...' : 'Enviar código'}
-            </button>
-            <p className="text-xs text-slate-400">Enviaremos um código de 6 dígitos para seu e-mail.</p>
+    <div className="min-h-[70vh] flex items-center justify-center p-6">
+      <Card className="w-full max-w-md shadow-xl rounded-2xl">
+        <CardContent className="p-8">
+          <h1 className="text-2xl font-semibold mb-2">Entrar</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            Acesse a plataforma Plenum com seu e-mail e senha.
+          </p>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="text-sm mb-1 block">E-mail</label>
+              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="voce@empresa.com" />
+            </div>
+            <div>
+              <label className="text-sm mb-1 block">Senha</label>
+              <Input type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
+            </div>
+            {msg && <p className="text-sm text-red-600">{msg}</p>}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? "Entrando..." : "Entrar"}
+            </Button>
           </form>
-        ) : (
-          <form onSubmit={verifyCode} className="space-y-3">
-            <p className="text-slate-300">Código enviado para <strong>{email}</strong>.</p>
-            <label className="block">
-              <span className="text-sm text-slate-300">Código de 6 dígitos</span>
-              <input
-                inputMode="numeric"
-                pattern="[0-9]*"
-                required
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-800 px-3 py-2 outline-none"
-                placeholder="000000"
-              />
-            </label>
-            <button disabled={loading} className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 py-2 font-semibold">
-              {loading ? 'Verificando...' : 'Entrar'}
-            </button>
-            <button type="button" onClick={() => setSent(false)} className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 py-2">
-              Voltar
-            </button>
-          </form>
-        )}
-      </div>
-    </main>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
