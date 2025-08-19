@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
-
 export default function Error({
   error,
   reset,
@@ -9,20 +7,19 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
   return (
-    <div className="p-6 space-y-3">
-      <h2 className="text-xl font-semibold">Ops, algo quebrou nesta página.</h2>
-      <pre className="text-sm whitespace-pre-wrap bg-black/30 p-3 rounded">{error.message}</pre>
+    <div className="p-6">
+      <h2 className="text-red-400 font-semibold mb-2">Erro em /enrollments</h2>
+      <pre className="text-xs whitespace-pre-wrap bg-black/30 p-3 rounded-xl">
+        {String(error?.message || error)}
+      </pre>
       <button
         onClick={() => reset()}
-        className="px-3 py-2 rounded bg-slate-700 hover:bg-slate-600"
+        className="mt-4 px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl"
       >
         Tentar novamente
       </button>
     </div>
   );
 }
+

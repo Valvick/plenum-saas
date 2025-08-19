@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+import { useEffect, useMemo, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
 type Employee = { id: string; full_name: string };
 type Course = { id: string; title: string; course_code: string; validity_days: number | null };
@@ -22,30 +22,36 @@ export default function Inner() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // Lê as envs (em build viram literais). Se faltarem, mostramos erro amigável.
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
+  const supabase = useMemo(() => {
+    try {
+      if (!supabaseUrl || !supabaseAnon) return null;
+      return createClient(supabaseUrl, supabaseAnon);
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }, [supabaseUrl, supabaseAnon]);
 
   useEffect(() => {
     (async () => {
       try {
         if (!supabaseUrl || !supabaseAnon) {
-          throw new Error(
-            'Variáveis de ambiente ausentes: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY.'
-          );
+          throw new Error('Variáveis de ambiente ausentes: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY.');
         }
-
-        const supabase = createBrowserClient(supabaseUrl, supabaseAnon);
+        if (!supabase) {
+          throw new Error('Falha ao iniciar o client do Supabase.');
+        }
 
         const { data, error } = await supabase
           .from('enrollments')
-          .select(
-            `
+          .select(`
             id, employee_id, course_id, completion_date, due_date, status, certificate_url,
             employee:employees ( id, full_name ),
             course:courses ( id, title, course_code, validity_days )
-          `
-          )
+          `)
           .limit(500);
 
         if (error) throw error;
@@ -70,7 +76,7 @@ export default function Inner() {
         setLoading(false);
       }
     })();
-  }, [supabaseUrl, supabaseAnon]);
+  }, [supabase, supabaseUrl, supabaseAnon]);
 
   if (loading) return <div className="p-6">Carregando…</div>;
   if (err) return <div className="p-6 text-red-400">Erro ao carregar matrículas: {err}</div>;
@@ -78,7 +84,6 @@ export default function Inner() {
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-2xl font-semibold">Matrículas</h1>
-
       <table className="min-w-full text-sm">
         <thead>
           <tr>
@@ -99,9 +104,7 @@ export default function Inner() {
           ))}
           {!rows.length && (
             <tr>
-              <td colSpan={4} className="p-3 text-slate-400">
-                Nenhuma matrícula encontrada.
-              </td>
+              <td colSpan={4} className="p-3 text-slate-400">Nenhuma matrícula encontrada.</td>
             </tr>
           )}
         </tbody>
