@@ -1,7 +1,6 @@
 // app/p/[slug]/page.tsx
 import { supabaseServer } from "@/lib/supabaseServer";
 
-export const revalidate = 0; // sempre SSR
 
 type Params = { params: { slug: string } };
 

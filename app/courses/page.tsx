@@ -1,21 +1,8 @@
 'use client';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableHeader,
-  TableHead,
-  TableRow,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
 
 type Course = {
   id: string;
@@ -47,46 +34,43 @@ export default function CoursesPage() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Cursos</h1>
         <div className="flex gap-2">
-          <Input
+          <input
             placeholder="Buscar..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            className="w-60"
+            className="w-60 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 outline-none"
           />
-          <Link href={'/enrollments' as Route}>
-            <Button>Ver matrículas</Button>
+          <Link href={'/enrollments' as Route} className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500">
+            Ver matrículas
           </Link>
         </div>
       </div>
 
-      <Card className="rounded-2xl">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Título</TableHead>
-                <TableHead>Validade (meses)</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell>{c.course_code}</TableCell>
-                  <TableCell>{c.title}</TableCell>
-                  <TableCell>{c.validity_days ?? '-'}</TableCell>
-                </TableRow>
-              ))}
-
-              {filtered.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={3}>Nenhum curso encontrado.</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl overflow-hidden border border-slate-800">
+        <table className="min-w-full text-sm">
+          <thead className="bg-slate-900/50">
+            <tr>
+              <th className="text-left px-4 py-3">Código</th>
+              <th className="text-left px-4 py-3">Título</th>
+              <th className="text-left px-4 py-3">Validade (meses)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((c) => (
+              <tr key={c.id} className="border-t border-slate-800">
+                <td className="px-4 py-3">{c.course_code}</td>
+                <td className="px-4 py-3">{c.title}</td>
+                <td className="px-4 py-3">{c.validity_days ?? '-'}</td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr className="border-t border-slate-800">
+                <td className="px-4 py-6 text-center" colSpan={3}>Nenhum curso encontrado.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
