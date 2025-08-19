@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
 type Employee = { id: string; full_name: string };
@@ -18,22 +18,25 @@ type Row = {
 };
 
 export default function Inner() {
-  const supabase = useMemo(
-    () =>
-      createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ),
-    [],
-  );
-
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
+  // Lê as envs (em build viram literais). Se faltarem, mostramos erro amigável.
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
   useEffect(() => {
     (async () => {
       try {
+        if (!supabaseUrl || !supabaseAnon) {
+          throw new Error(
+            'Variáveis de ambiente ausentes: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY.'
+          );
+        }
+
+        const supabase = createBrowserClient(supabaseUrl, supabaseAnon);
+
         const { data, error } = await supabase
           .from('enrollments')
           .select(
@@ -41,7 +44,7 @@ export default function Inner() {
             id, employee_id, course_id, completion_date, due_date, status, certificate_url,
             employee:employees ( id, full_name ),
             course:courses ( id, title, course_code, validity_days )
-          `,
+          `
           )
           .limit(500);
 
@@ -67,10 +70,10 @@ export default function Inner() {
         setLoading(false);
       }
     })();
-  }, [supabase]);
+  }, [supabaseUrl, supabaseAnon]);
 
   if (loading) return <div className="p-6">Carregando…</div>;
-  if (err) return <div className="p-6">Erro ao carregar matrículas: {err}</div>;
+  if (err) return <div className="p-6 text-red-400">Erro ao carregar matrículas: {err}</div>;
 
   return (
     <div className="p-6 space-y-4">
